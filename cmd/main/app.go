@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -10,16 +9,25 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"mado/internal/user"
+	"mado/pkg/logging"
 )
 
 func main() {
+	logger := logging.GetLogger() //^ we call out logging package there (outside of it is own package and because of it func init will call automaticly)
+	logger.Info("Create router")
 	router := httprouter.New()
-	handler := user.NewHandler()
+
+	logger.Info("Register user handler")
+	handler := user.NewHandler(logger)
 	handler.Register(router)
 	start(router)
 }
 
 func start(router *httprouter.Router) {
+
+	logger := logging.GetLogger()
+	logger.Info("Start the application")
+
 	//for working with websockets in future because websockets based on tcp protocol
 	listener, err := net.Listen("tcp", ":1234")
 	if err != nil {
@@ -33,7 +41,7 @@ func start(router *httprouter.Router) {
 	}
 
 	if err := server.Serve(listener); err != nil {
-		log.Fatalln(err)
+		logger.Fatal(err)
 	}
-	fmt.Println("Started listening server on port")
+	logger.Info("Started listening server on port")
 }

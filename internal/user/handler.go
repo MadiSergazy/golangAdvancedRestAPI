@@ -6,6 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 
 	"mado/internal/handlers"
+	"mado/pkg/logging"
 )
 
 // chit for detecting matching interfaces
@@ -18,10 +19,13 @@ const (
 
 // it is need for logger and service
 type handler struct {
+	logger logging.Logger
 }
 
-func NewHandler() handlers.Handler {
-	return &handler{}
+func NewHandler(logger logging.Logger) handlers.Handler {
+	return &handler{
+		logger: logger,
+	}
 
 }
 
