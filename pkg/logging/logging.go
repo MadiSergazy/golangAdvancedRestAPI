@@ -59,6 +59,9 @@ func init() { //when init writed with small letter it will called automaticly (i
 		panic(err)
 	}
 	//* 0644 grants read and write permissions
+	//^os.O_CREATE: This flag indicates that the file should be created if it does not exist.
+	//^os.O_WRONLY: This flag specifies that the file should be opened for writing.
+	//^os.O_APPEND: This flag indicates that data should be appended to the end of the file rather than overwriting existing content
 	allFile, err := os.OpenFile(logsFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		l.Info(err)
