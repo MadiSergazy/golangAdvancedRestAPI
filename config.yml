@@ -1,0 +1,9 @@
+
+
+is_debug: true 
+# for running app on port and socket
+listen:
+  # type: port 
+  type: sock 
+  # bind_id: 0.0.0.0
+  # port: 10000

@@ -22,7 +22,7 @@ const (
 // also they need for increasing perfomance, //? It specifies which writers to use for logs and which log levels to apply the hook to
 type writeHook struct {
 	Writer    []io.Writer    // * for being able to write to the: stdout stdr files elasticSearch kafka etc
-	LogLevels []logrus.Level //for leveling logs
+	LogLevels []logrus.Level // for leveling logs
 }
 
 // this func will be called every time when we will write log
@@ -41,11 +41,11 @@ func (hook *writeHook) Levels() []logrus.Level {
 	return hook.LogLevels
 }
 
-func init() { //when init writed with small letter it will called automaticly (if this package (package logging) will be used outside of the package)
+func init() { // when init writed with small letter it will called automaticly (if this package (package logging) will be used outside of the package)
 	l := logrus.New()
 	l.SetReportCaller(true)
 	l.Formatter = &logrus.TextFormatter{
-		//CallerPrettyfier is need for telling in whitch place we are logging
+		// CallerPrettyfier is need for telling in whitch place we are logging
 		CallerPrettyfier: func(frame *runtime.Frame) (function string, file string) {
 			filename := path.Base(frame.File)
 			return fmt.Sprintf("%s()", frame.Function), fmt.Sprintf("%s:%d", filename, frame.Line)
@@ -69,13 +69,13 @@ func init() { //when init writed with small letter it will called automaticly (i
 	}
 
 	// * sets the log output to be discarded, meaning logs won't be printed to the terminal.
-	l.SetOutput(io.Discard) //need for log's did't go anywhere
+	l.SetOutput(io.Discard) // need for log's did't go anywhere
 	l.AddHook(&writeHook{
-		Writer:    []io.Writer{allFile, os.Stdout}, //we will write to all.log file and terminal
+		Writer:    []io.Writer{allFile, os.Stdout}, // we will write to all.log file and terminal
 		LogLevels: logrus.AllLevels,
 	})
 
-	l.SetLevel(logrus.TraceLevel) //capturing all log levels.
+	l.SetLevel(logrus.TraceLevel) // capturing all log levels.
 
 	e = logrus.NewEntry(l) // creates a new logrus Entry instance based on the configured logger
 }
@@ -87,10 +87,10 @@ type Logger struct {
 	*logrus.Entry
 }
 
-func GetLogger() Logger {
-	return Logger{e}
+func GetLogger() *Logger {
+	return &Logger{e}
 }
 
-func (l *Logger) GetLoggerWithField(field string, value interface{}) Logger {
-	return Logger{l.WithField(field, value)}
+func (l *Logger) GetLoggerWithField(field string, value interface{}) *Logger {
+	return &Logger{l.WithField(field, value)}
 }
