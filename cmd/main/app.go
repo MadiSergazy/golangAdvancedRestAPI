@@ -49,6 +49,7 @@ func start(router *httprouter.Router, cfg *config.Config) {
 		socketPath := path.Join(appDir, "app.sock")
 
 		logger.Info("Listen unix socket %s", socketPath)
+		// ^Unix sockets are used for faster communication between processes on the same computer
 		listener, err = net.Listen("unix", socketPath)
 		if err != nil {
 			// logger.Info(err)
@@ -60,6 +61,7 @@ func start(router *httprouter.Router, cfg *config.Config) {
 		logger.Info("Listen tcp socket")
 		var err error
 		// for working with websockets in future because websockets based on tcp protocol
+		// TCP is used for reliable communication over a network
 		listener, err = net.Listen("tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIP, cfg.Listen.Port))
 		if err != nil {
 			log.Fatal(err)
