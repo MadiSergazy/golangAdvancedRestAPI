@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"mado/internal/config"
 	"mado/internal/user"
+	"mado/internal/user/db"
+	"mado/pkg/client/mongodb"
 	"mado/pkg/logging"
 	"net"
 	"net/http"
@@ -22,6 +25,12 @@ func main() {
 	router := httprouter.New()
 
 	cfg := config.GetConfig()
+
+	mongoDBClient, err := mongodb.NewClient(context.TODO())
+	if err != nil {
+		panic(err)
+	}
+	storage := db.NewStorage(mongoDBClient, "users", logger)
 
 	logger.Info("Register user handler")
 	handler := user.NewHandler(logger)

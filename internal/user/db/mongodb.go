@@ -16,6 +16,9 @@ import (
 var (
 	errCreateUser      = errors.New("failed to create user ")
 	errConvertObjectID = errors.New("failed to create user ")
+	errUserNotFound    = errors.New("not found user")
+	errEntityNotFound  = errors.New("err entity not dound")
+	errNotFound        = errors.New("not found")
 )
 
 type db struct {
@@ -60,6 +63,10 @@ func (d *db) FindOne(ctx context.Context, id string) (u user.User, err error) {
 	res := d.collection.FindOne(ctx, filter)
 	if res.Err() != nil {
 		// TODO 404
+
+		if errors.Is(res.Err(), mongo.ErrNoDocuments) {
+			return u, fmt.Errorf("err entity not dound")
+		}
 		return u, fmt.Errorf("Failed to find user by id: %s", id)
 	}
 
@@ -70,7 +77,58 @@ func (d *db) FindOne(ctx context.Context, id string) (u user.User, err error) {
 }
 
 func (d *db) Update(ctx context.Context, user user.User) error {
+	objectID, err := primitive.ObjectIDFromHex(user.ID)
+	if err != nil {
+		return fmt.Errorf("failed to convert user ID to ObjectID ID=%s", user.ID)
+	}
+
+	filter := bson.M{"_id": objectID}
+	userBytes, err := bson.Marshal(user)
+	if err != nil {
+		return fmt.Errorf("failed to marshal user, err: %v", err)
+	}
+
+	var updateUserObj bson.M
+
+	if err = bson.Unmarshal(userBytes, &updateUserObj); err != nil {
+		return fmt.Errorf("failed to unmarshal user bytes, err: %v", err)
+	}
+
+	delete(updateUserObj, "_id")
+
+	update := bson.M{
+		"$set": updateUserObj,
+	}
+
+	res, err := d.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return fmt.Errorf("failed to execute update user query, err: %v", err)
+	}
+
+	if res.MatchedCount == 0 {
+		return errUserNotFound
+	}
+
+	d.logger.Tracef("Matched %d documents and modified %d documents", res.MatchedCount, res.ModifiedCount)
+
+	return nil
 }
 
 func (d *db) Delete(ctx context.Context, id string) error {
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("failed to convert user ID to ObjectID ID=%s", id)
+	}
+
+	filter := bson.M{"_id": objectID}
+
+	res, err := d.collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return fmt.Errorf("failed to convert user ID to ObjectID ID=%s", id)
+	}
+	if res.DeletedCount == 0 {
+		return errNotFound
+	}
+	d.logger.Tracef("Deleted %d documents", res.DeletedCount)
+	return nil
 }
