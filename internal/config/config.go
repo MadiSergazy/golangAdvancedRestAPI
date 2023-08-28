@@ -25,6 +25,16 @@ type Config struct {
 		Password   string `json:"password"`
 		Collection string `json:"collection"`
 	} `json:"mongodb"`
+	Storage StorageConfig `yaml:"storage"`
+}
+
+type StorageConfig struct {
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	Database string `json:"database"`
+
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 var (
