@@ -1,10 +1,11 @@
 package config
 
 import (
-	"mado/pkg/logging"
 	"sync"
 
 	"github.com/ilyakaznacheev/cleanenv"
+
+	"mado/pkg/logging"
 )
 
 // The Singleton design pattern ensures that a class has only one instance and provides a global point of access to that instance.
@@ -16,14 +17,14 @@ type Config struct {
 		Port   string `yaml:"port" env-default:"8080"`
 	} `yaml:"listen"`
 	MongoDB struct {
-		Host       string `json:""`
-		Port       string `json:""`
-		Database   string `json:""`
-		AuthDB     string `json:""`
-		Username   string `json:""`
-		Password   string `json:""`
-		Collection string `json:""`
-	}
+		Host       string `json:"host"`
+		Port       string `json:"port"`
+		Database   string `json:"database"`
+		AuthDB     string `json:"auth_db"`
+		Username   string `json:"username"`
+		Password   string `json:"password"`
+		Collection string `json:"collection"`
+	} `json:"mongodb"`
 }
 
 var (

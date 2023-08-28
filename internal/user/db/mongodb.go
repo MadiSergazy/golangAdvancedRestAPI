@@ -4,21 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"mado/internal/user"
-	"mado/pkg/logging"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	"mado/internal/apperror"
+	"mado/internal/user"
+	"mado/pkg/logging"
 )
 
 var (
 	errCreateUser      = errors.New("failed to create user ")
 	errConvertObjectID = errors.New("failed to create user ")
-	errUserNotFound    = errors.New("not found user")
-	errEntityNotFound  = errors.New("err entity not dound")
-	errNotFound        = errors.New("not found")
 )
 
 type db struct {
@@ -55,23 +54,42 @@ func (d *db) Create(ctx context.Context, user user.User) (string, error) {
 func (d *db) FindOne(ctx context.Context, id string) (u user.User, err error) {
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return u, fmt.Errorf("Failed to convert hex to objectID hex: %s", id)
+		return u, fmt.Errorf("failed to convert hex to objectID hex: %s", id)
 	}
 
 	filter := bson.M{"_id": oid}
 
 	res := d.collection.FindOne(ctx, filter)
 	if res.Err() != nil {
-		// TODO 404
-
 		if errors.Is(res.Err(), mongo.ErrNoDocuments) {
-			return u, fmt.Errorf("err entity not dound")
+			return u, apperror.ErrNotFound
 		}
-		return u, fmt.Errorf("Failed to find user by id: %s", id)
+		return u, fmt.Errorf("failed to find user by id: %s", id)
 	}
 
 	if err = res.Decode(&u); err != nil {
-		return u, fmt.Errorf("Failed to decode user by id: %s from BD due to error: %s", id, err)
+		return u, fmt.Errorf("failed to decode user by id: %s from BD due to error: %s", id, err)
+	}
+	return u, nil
+}
+
+func (d *db) FindAll(ctx context.Context) (u []user.User, err error) {
+
+	cur, err := d.collection.Find(ctx, bson.M{})
+	if err != nil {
+		// TODO 404
+
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return u, fmt.Errorf("err entity not dound")
+		}
+		return u, fmt.Errorf("failed to find all user")
+	}
+
+	for cur.Next(ctx) {
+		var userOne user.User
+
+		cur.Decode(userOne)
+		u = append(u, userOne)
 	}
 	return u, nil
 }
@@ -106,7 +124,7 @@ func (d *db) Update(ctx context.Context, user user.User) error {
 	}
 
 	if res.MatchedCount == 0 {
-		return errUserNotFound
+		return apperror.ErrNotFound
 	}
 
 	d.logger.Tracef("Matched %d documents and modified %d documents", res.MatchedCount, res.ModifiedCount)
@@ -127,7 +145,7 @@ func (d *db) Delete(ctx context.Context, id string) error {
 		return fmt.Errorf("failed to convert user ID to ObjectID ID=%s", id)
 	}
 	if res.DeletedCount == 0 {
-		return errNotFound
+		return apperror.ErrNotFound
 	}
 	d.logger.Tracef("Deleted %d documents", res.DeletedCount)
 	return nil

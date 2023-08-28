@@ -4,11 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"mado/internal/config"
-	"mado/internal/user"
-	"mado/internal/user/db"
-	"mado/pkg/client/mongodb"
-	"mado/pkg/logging"
 	"net"
 	"net/http"
 	"os"
@@ -17,6 +12,12 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
+
+	"mado/internal/config"
+	"mado/internal/user"
+	"mado/internal/user/db"
+	"mado/pkg/client/mongodb"
+	"mado/pkg/logging"
 )
 
 func main() {
@@ -26,11 +27,21 @@ func main() {
 
 	cfg := config.GetConfig()
 
-	mongoDBClient, err := mongodb.NewClient(context.TODO())
+	cfgMongo := cfg.MongoDB
+	mongoDBClient, err := mongodb.NewClient(context.Background(), cfgMongo.Host, cfgMongo.Port, cfgMongo.Username, cfgMongo.Password, cfgMongo.Database, cfgMongo.AuthDB)
 	if err != nil {
 		panic(err)
 	}
-	storage := db.NewStorage(mongoDBClient, "users", logger)
+	storage := db.NewStorage(mongoDBClient, cfg.MongoDB.Collection, logger)
+
+	user1 := user.User{
+		ID: "", Email: "myemail@example.com", Username: "mado", PasswordHash: "123456",
+	}
+	user1ID, err := storage.Create(context.TODO(), user1)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	logger.Info("user1ID: ", user1ID)
 
 	logger.Info("Register user handler")
 	handler := user.NewHandler(logger)

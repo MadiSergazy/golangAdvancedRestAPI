@@ -1,6 +1,8 @@
 package user
 
-import "context"
+import (
+	"context"
+)
 
 // if in future we want to change DB
 type Storage interface {
@@ -8,4 +10,5 @@ type Storage interface {
 	FindOne(ctx context.Context, id string) (User, error)
 	Update(ctx context.Context, user User) error
 	Delete(ctx context.Context, id string) error
+	FindAll(ctx context.Context) (u []User, err error)
 }
