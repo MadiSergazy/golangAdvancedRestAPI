@@ -13,10 +13,10 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
+	author "mado/internal/author/db"
 	"mado/internal/config"
 	"mado/internal/user"
-	"mado/internal/user/db"
-	"mado/pkg/client/mongodb"
+	"mado/pkg/client/postgresql"
 	"mado/pkg/logging"
 )
 
@@ -27,21 +27,28 @@ func main() {
 
 	cfg := config.GetConfig()
 
-	cfgMongo := cfg.MongoDB
-	mongoDBClient, err := mongodb.NewClient(context.Background(), cfgMongo.Host, cfgMongo.Port, cfgMongo.Username, cfgMongo.Password, cfgMongo.Database, cfgMongo.AuthDB)
+	postgreSQLClient, err := postgresql.NewClient(context.TODO(), 3, cfg.Storage)
 	if err != nil {
-		panic(err)
+		logger.Fatalf("%v", err)
 	}
-	storage := db.NewStorage(mongoDBClient, cfg.MongoDB.Collection, logger)
 
-	user1 := user.User{
-		ID: "", Email: "myemail@example.com", Username: "mado", PasswordHash: "123456",
-	}
-	user1ID, err := storage.Create(context.TODO(), user1)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	logger.Info("user1ID: ", user1ID)
+	authorRepository := author.NewRepository(postgreSQLClient, logger)
+
+	// cfgMongo := cfg.MongoDB
+	// mongoDBClient, err := mongodb.NewClient(context.Background(), cfgMongo.Host, cfgMongo.Port, cfgMongo.Username, cfgMongo.Password, cfgMongo.Database, cfgMongo.AuthDB)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// storage := db.NewStorage(mongoDBClient, cfg.MongoDB.Collection, logger)
+
+	// user1 := user.User{
+	// 	ID: "", Email: "myemail@example.com", Username: "mado", PasswordHash: "123456",
+	// }
+	// user1ID, err := storage.Create(context.TODO(), user1)
+	// if err != nil {
+	// 	logger.Fatal(err)
+	// }
+	// logger.Info("user1ID: ", user1ID)
 
 	logger.Info("Register user handler")
 	handler := user.NewHandler(logger)

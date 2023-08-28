@@ -6,13 +6,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/jackc/pgx"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 
+	"mado/internal/config"
 	"mado/pkg/utils"
 )
 
+// implementing connection pool and transaction
 type Client interface {
 	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
@@ -22,8 +24,8 @@ type Client interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
-func NewClient(ctx context.Context, username, password, host, port, database string, maxAttempts int) (pool *pgxpool.Pool, err error) {
-	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", username, password, host, port, database)
+func NewClient(ctx context.Context, maxAttempts int, cfg config.StorageConfig) (pool *pgxpool.Pool, err error) {
+	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
 	// var pool *pgxpool.Pool
 	// var err error   //instead of this used named params
 
